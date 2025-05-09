@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeGen - Generatore Etichette Barcode</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="assets/img/icon-192.png">
+</head>
+<body>
+    <div class="overlay" id="overlay"></div>
+    
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">CodeGen</div>
+            <button class="menu-btn" id="close-sidebar">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="sidebar-content">
+            <ul class="sidebar-menu">
+                <li><a href="#" data-section="labels"><i class="fas fa-tags"></i> Etichette</a></li>
+                <li><a href="#" data-section="products"><i class="fas fa-boxes"></i> Prodotti</a></li>
+                <li><a href="#" data-section="settings"><i class="fas fa-cog"></i> Impostazioni</a></li>
+                <li><a href="#" data-section="history"><i class="fas fa-history"></i> Storico</a></li>
+                <li><hr></li>
+                <li><a href="#" id="export-data"><i class="fas fa-file-export"></i> Esporta Dati</a></li>
+                <li><a href="#" id="import-data"><i class="fas fa-file-import"></i> Importa Dati</a></li>
+            </ul>
+        </div>
+    </div>
+    
+    <header>
+        <button class="menu-btn" id="open-sidebar">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div class="logo">CodeGen</div>
+        <div class="header-actions">
+            <button id="help-btn" class="icon-btn">
+                <i class="fas fa-question-circle"></i>
+            </button>
+        </div>
+    </header>
+    
+    <div class="container">
+        <!-- Sezione Etichette -->
+        <div id="labels-section">
+            <div class="search-bar">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="product-search" placeholder="Cerca per codice o descrizione..." autocomplete="off">
+            </div>
+            
+            <div class="form-group">
+                <label for="article-code">Codice Articolo</label>
+                <input type="text" id="article-code" placeholder="0109" maxlength="4" pattern="\d{4}" required>
+            </div>
+            
+            <div class="form-group">
+                <div class="switch-container">
+                    <label class="switch">
+                        <input type="checkbox" id="weight-item">
+                        <span class="slider"></span>
+                    </label>
+                    <span>Articolo a Peso</span>
+                </div>
+                
+                <div id="quantity-fields" class="hidden">
+                    <label for="quantity">Quantità</label>
+                    <input type="number" id="quantity" min="1" value="1">
+                </div>
+                
+                <div id="weight-fields">
+                    <label for="weight">Peso</label>
+                    <div class="weight-input">
+                        <input type="number" id="weight-integer" min="0" value="1">
+                        <span>,</span>
+                        <input type="number" id="weight-decimal" min="0" max="99" value="45">
+                        <span>kg</span>
+                    </div>
+                </div>
+                
+                <label for="description">Descrizione</label>
+                <input type="text" id="description" placeholder="PORCHETTA NOSTRANA S.V.">
+                
+                <button id="generate-btn" class="btn">
+                    <i class="fas fa-barcode"></i> Genera Etichetta
+                </button>
+            </div>
+            
+            <div id="preview-container" class="preview-container hidden">
+                <h3>Anteprima Etichetta</h3>
+                
+                <div class="barcode">
+                    <svg id="barcode-svg"></svg>
+                    <div id="barcode-number" class="barcode-number">200109014506</div>
+                </div>
+                
+                <div class="product-info">
+                    <p><strong id="preview-description">PORCHETTA NOSTRANA S.V.</strong></p>
+                    <p>Codice: <span id="preview-code">0109</span></p>
+                    <p id="preview-quantity-weight">Peso: <span id="preview-weight">1.450 Kg</span></p>
+                </div>
+                
+                <div class="action-buttons">
+                    <button id="save-btn" class="btn btn-success">
+                        <i class="fas fa-save"></i> Salva
+                    </button>
+                    <button id="print-btn" class="btn btn-secondary">
+                        <i class="fas fa-print"></i> Stampa
+                    </button>
+                    <button id="share-btn" class="btn btn-secondary">
+                        <i class="fas fa-share-alt"></i> Condividi
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sezione Prodotti -->
+        <div id="products-section" class="hidden">
+            <h2><i class="fas fa-boxes"></i> Prodotti</h2>
+            <div class="search-bar">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="product-list-search" placeholder="Cerca prodotti...">
+            </div>
+            
+            <div class="import-export-buttons">
+                <button id="import-csv-btn" class="btn btn-secondary">
+                    <i class="fas fa-file-import"></i> Importa CSV
+                </button>
+                <button id="export-csv-btn" class="btn btn-secondary">
+                    <i class="fas fa-file-export"></i> Esporta CSV
+                </button>
+            </div>
+            
+            <ul class="product-list" id="product-list">
+                <li class="no-products">Nessun prodotto salvato</li>
+            </ul>
+            
+            <button id="add-product-btn" class="btn">
+                <i class="fas fa-plus"></i> Aggiungi Prodotto
+            </button>
+        </div>
+        
+        <!-- Sezione Impostazioni -->
+        <div id="settings-section" class="hidden">
+            <h2><i class="fas fa-cog"></i> Impostazioni</h2>
+            
+            <div class="settings-group">
+                <h3>Formato Etichette</h3>
+                <div class="form-group">
+                    <label for="label-size">Dimensioni Etichetta</label>
+                    <select id="label-size">
+                        <option value="100x100">100 × 100 mm</option>
+                        <option value="80x60">80 × 60 mm</option>
+                        <option value="120x80">120 × 80 mm</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="barcode-type">Tipo Barcode</label>
+                    <select id="barcode-type">
+                        <option value="EAN13">EAN-13</option>
+                        <option value="CODE128">Code 128</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="settings-group">
+                <h3>Logo Aziendale</h3>
+                <div class="logo-preview" id="logo-preview">
+                    <img id="company-logo-img" src="" alt="Logo aziendale" style="max-width: 200px; display: none;">
+                    <p id="no-logo-text">Nessun logo caricato</p>
+                </div>
+                <input type="file" id="logo-upload" accept="image/png, image/jpeg, image/svg+xml" style="display: none;">
+                <button id="upload-logo-btn" class="btn btn-secondary">
+                    <i class="fas fa-upload"></i> Carica Logo
+                </button>
+                <button id="remove-logo-btn" class="btn btn-danger">
+                    <i class="fas fa-trash-alt"></i> Rimuovi Logo
+                </button>
+            </div>
+            
+            <div class="settings-group">
+                <h3>Stampa</h3>
+                <div class="form-group">
+                    <label for="printer-select">Stampante</label>
+                    <select id="printer-select">
+                        <option value="default">Stampante predefinita</option>
+                        <option value="thermal">Stampante termica</option>
+                    </select>
+                </div>
+                
+                <div class="switch-container">
+                    <label class="switch">
+                        <input type="checkbox" id="auto-print" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <span>Stampa automatica dopo generazione</span>
+                </div>
+            </div>
+            
+            <div class="settings-group">
+                <h3>Avanzate</h3>
+                <button id="reset-app-btn" class="btn btn-danger">
+                    <i class="fas fa-trash-alt"></i> Ripristina Impostazioni
+                </button>
+            </div>
+        </div>
+        
+        <!-- Sezione Storico -->
+        <div id="history-section" class="hidden">
+            <h2><i class="fas fa-history"></i> Storico</h2>
+            
+            <div class="search-bar">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="history-search" placeholder="Cerca nello storico...">
+            </div>
+            
+            <div class="history-actions">
+                <button id="clear-history-btn" class="btn btn-danger">
+                    <i class="fas fa-trash-alt"></i> Cancella Storico
+                </button>
+            </div>
+            
+            <div id="history-list">
+                <div class="no-history">Nessuna etichetta generata recentemente</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="nav-menu">
+        <a href="#" class="nav-item active" data-section="labels">
+            <i class="fas fa-tags nav-icon"></i>
+            <span>Etichette</span>
+        </a>
+        <a href="#" class="nav-item" data-section="products">
+            <i class="fas fa-boxes nav-icon"></i>
+            <span>Prodotti</span>
+        </a>
+        <a href="#" class="nav-item" data-section="settings">
+            <i class="fas fa-cog nav-icon"></i>
+            <span>Impostazioni</span>
+        </a>
+        <a href="#" class="nav-item" data-section="history">
+            <i class="fas fa-history nav-icon"></i>
+            <span>Storico</span>
+        </a>
+    </div>
+    
+    <div class="toast" id="toast"></div>
+
+    <!-- Script esterni -->
+    <script src="lib/jsbarcode.min.js"></script>
+    <script src="lib/jspdf.umd.min.js"></script>
+    <script src="lib/html2canvas.min.js"></script>
+    
+    <!-- Script dell'applicazione -->
+    <script src="assets/js/storage.js"></script>
+    <script src="assets/js/barcode.js"></script>
+    <script src="assets/js/products.js"></script>
+    <script src="assets/js/app.js"></script>
+    
+    <script>
+        // Registrazione Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registrato con successo');
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registrazione fallita: ', err);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
